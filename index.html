@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Rescue Stripe</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="/">rescue stripe</a
+      ><span>Erasure coding / a recovery workbench</span
+      ><button id="import">Open shards</button
+      ><input
+        type="file"
+        id="shard-files"
+        accept=".json,application/json"
+        multiple
+        hidden
+      />
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">Redundancy, with a purpose.</p>
+        <h1>Some pieces can disappear.<br />The file can still come home.</h1>
+        <p>
+          Split a file into data and parity shards. Mark pieces unavailable,
+          recover from any sufficient subset, and rebuild the missing shards.
+        </p>
+      </section>
+      <p id="message" role="status">Preparing a fictional example…</p>
+      <section class="setup">
+        <div>
+          <p class="eyebrow">Source file</p>
+          <h2 id="filename">Fictional field note</h2>
+          <p id="source-size"></p>
+          <div class="buttons">
+            <button id="choose">Choose file</button
+            ><button id="example">Use example</button
+            ><input type="file" id="file" hidden />
+          </div>
+        </div>
+        <form id="encode">
+          <label
+            >Data shards k<input
+              id="k"
+              type="number"
+              min="2"
+              max="8"
+              value="3"
+              required /></label
+          ><label
+            >Total shards n<input
+              id="n"
+              type="number"
+              min="2"
+              max="12"
+              value="5"
+              required /></label
+          ><button id="encode-button">Encode stripe</button>
+        </form>
+      </section>
+      <section class="stripe">
+        <div class="section-title">
+          <h2>The available pieces</h2>
+          <button id="lose">Mark first two unavailable</button>
+        </div>
+        <p id="stripe-info"></p>
+        <div id="shards"></div>
+        <p class="caption">
+          Checked shards are available for recovery and bundle export.
+          Unchecking simulates an erasure; it does not delete a downloaded file.
+        </p>
+        <div class="buttons">
+          <button id="recover" disabled>Recover available shards</button
+          ><button id="bundle" disabled>Save available bundle</button>
+        </div>
+      </section>
+      <section class="recovery">
+        <div>
+          <p class="eyebrow">Recovery result</p>
+          <h2 id="recovery-title">No recovery attempted.</h2>
+          <p id="recovery-note">Choose at least k distinct shards.</p>
+          <div class="buttons">
+            <button id="download" disabled>Download recovered bytes</button
+            ><button id="repair" disabled>Restore all rebuilt shards</button
+            ><button id="evidence" disabled>Save recovery evidence</button>
+          </div>
+        </div>
+        <pre id="preview">
+Recovered UTF-8 preview appears here. Binary files may contain replacement characters.</pre
+        >
+      </section>
+      <details>
+        <summary>Inspect the coding matrix</summary>
+        <p>
+          The first k rows are the identity matrix, so those shards contain
+          contiguous source blocks with zero padding. Other rows hold parity
+          coefficients in GF(256), with polynomial 0x11d.
+        </p>
+        <pre id="matrix"></pre>
+        <pre id="inverse"></pre>
+      </details>
+      <details>
+        <summary>What recovery guarantees</summary>
+        <p>
+          Any k distinct, consistent shards from the same set recover the file.
+          Checksums reject accidental changes; a recovered payload hash and
+          checks of additional shards validate the reconstruction. This
+          implementation corrects known erasures, not unknown errors. Corrupt
+          shards must be excluded rather than automatically repaired.
+        </p>
+        <p>
+          Erasure coding is not encryption. Data shards reveal file bytes, and
+          hashes are not signatures. Someone who can replace all metadata and
+          checksums can create another internally consistent set. Store
+          independent copies in independent failure domains; keeping every shard
+          in one folder does not protect against losing that folder.
+        </p>
+        <p>
+          Files are limited to 256 KiB. There are no uploads, persistence,
+          accounts, or cloud storage. All coding runs in a local browser worker.
+          Save shard files or bundles before closing the page. Original
+          filenames are not embedded in shards.
+        </p>
+      </details>
+    </main>
+    <footer>Enough independent pieces. One verifiable reconstruction.</footer>
+  </body>
+</html>
