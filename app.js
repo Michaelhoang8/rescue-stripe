@@ -2,9 +2,9 @@ import { MAX_BYTES } from "./core.js";
 const $ = (id) => document.getElementById(id),
   worker = new Worker("/worker.js", { type: "module" }),
   sample =
-    "Rescue Stripe — fictional field notes.\nA few missing pieces need not end the story.\n";
+    "Rescue Stripe sample\nRecord: DEMO-2048\nPayload: file recovery check\n";
 let source = new TextEncoder().encode(sample),
-  sourceName = "fictional-notes.txt",
+  sourceName = "sample-record.txt",
   stripe = null,
   available = new Set(),
   recovered = null,
@@ -30,6 +30,7 @@ function download(name, data, type = "application/json") {
 }
 function clearRecovery() {
   recovered = null;
+  document.querySelector(".recovery").classList.remove("verified");
   $("recovery-title").textContent = "No recovery attempted.";
   $("recovery-note").textContent = "Choose at least k distinct shards.";
   $("preview").textContent =
@@ -67,6 +68,13 @@ function render() {
   if (!stripe) return;
   const { metadata, matrix } = stripe;
   const selected = available.size;
+  $("availability-label").textContent =
+    `${selected} / ${metadata.n} available · ${metadata.k} required`;
+  $("availability-fill").style.width = `${(100 * selected) / metadata.n}%`;
+  $("required-mark").style.left = `${(100 * metadata.k) / metadata.n}%`;
+  document
+    .querySelector(".availability")
+    .classList.toggle("insufficient", selected < metadata.k);
   $("stripe-info").textContent =
     `${metadata.k} required / ${metadata.n} total · ${selected} available · ${metadata.size} bytes per shard · ${metadata.length} original bytes · ${(metadata.n * metadata.size).toLocaleString()} encoded payload bytes (before JSON).`;
   for (let i = 0; i < metadata.n; i++) {
@@ -88,6 +96,7 @@ function render() {
       else available.delete(i);
       clearRecovery();
       render();
+      $("shards").querySelector(`input[data-index="${i}"]`)?.focus();
       message(
         available.size >= metadata.k
           ? "Enough shards selected for recovery."
@@ -108,6 +117,23 @@ function render() {
       ),
     );
     if (shard) {
+      const bytes = atob(shard.data).slice(0, 32),
+        canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 64;
+      canvas.className = "shard-bytes";
+      canvas.setAttribute("role", "img");
+      canvas.setAttribute(
+        "aria-label",
+        `First ${bytes.length} payload bytes; cell brightness indicates byte value`,
+      );
+      const ctx = canvas.getContext("2d");
+      for (let j = 0; j < bytes.length; j++) {
+        const lightness = 23 + (bytes.charCodeAt(j) / 255) * 55;
+        ctx.fillStyle = `hsl(${i < metadata.k ? 188 : 35} 35% ${lightness}%)`;
+        ctx.fillRect((j % 8) * 16, Math.floor(j / 8) * 16, 14, 14);
+      }
+      card.append(canvas);
       const b = el("button", "Save shard");
       b.disabled = busy;
       b.onclick = () =>
@@ -156,6 +182,15 @@ worker.onmessage = ({ data }) => {
   }
   if (pending === "recover") {
     recovered = { ...data.result, bytes: new Uint8Array(data.result.bytes) };
+    document.querySelector(".recovery").classList.add("verified");
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches)
+      $("preview").animate(
+        [
+          { opacity: 0.4, transform: "translateY(5px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ],
+        { duration: 350, easing: "ease-out" },
+      );
     $("recovery-title").textContent =
       `${recovered.bytes.length} bytes recovered.`;
     $("recovery-note").textContent =
@@ -217,7 +252,7 @@ $("file").onchange = async () => {
 };
 $("example").onclick = () => {
   source = new TextEncoder().encode(sample);
-  sourceName = "fictional-notes.txt";
+  sourceName = "sample-record.txt";
   controls();
   message("Example loaded. Encode to replace the current stripe.");
 };

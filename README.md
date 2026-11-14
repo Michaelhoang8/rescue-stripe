@@ -4,6 +4,8 @@ A systematic Reed–Solomon erasure-coding workbench over GF(256). Encode a loca
 
 ![Recovery from a partial bundle](docs/workbench.png)
 
+The shard rack shows a byte-intensity preview of the first 32 bytes of each available payload. An availability meter marks the recovery threshold; successful recovery highlights the verified result. Unavailable slots remain visible and keyboard selection preserves focus. Motion respects reduced-motion settings.
+
 ## Run
 
 ```sh
@@ -14,7 +16,7 @@ Open http://127.0.0.1:8000 in a modern browser with module workers, WebCrypto, a
 
 ## Try a recovery
 
-The fictional example is 86 bytes. With k=3 and n=5, each shard has 29 bytes, including one padding byte across the three data blocks. The encoded payload totals 145 bytes before JSON/base64 overhead.
+The sample record is 68 bytes. With k=3 and n=5, each shard has 23 bytes, with 1 padding bytes across the three data blocks. The encoded payload totals 115 bytes before JSON/base64 overhead.
 
 1. Mark the first two shards unavailable.
 2. Recover from shards 3, 4, and 5. The payload hash and supplied-shard consistency checks must pass before downloading.
@@ -65,6 +67,6 @@ python -m unittest discover -s tests -v
 
 Seven JavaScript tests exhaust all 65,536 field products against independent polynomial multiplication, verify every allowed k-row recovery subset for every supported k/n generator, recover all three-of-five subsets of all 256 byte values, rebuild identical shard packages, recover the full 256 KiB boundary and empty files, and reject malformed/mixed/duplicate/corrupt inputs. A recomputed-checksum extra shard is specifically tested for consistency rejection. The Python test checks HTTP static-asset isolation. CI covers Node 22/24 on Linux and Node 24 on Windows.
 
-Browser verification covers insufficient shards, two missing data shards, partial-bundle save/import, actual missing-index controls, full shard repair, corrupt import rejection, and a separate uploaded binary file using 2-of-3 coding. An independent Python polynomial-field decoder verified the downloaded 86-byte example, both matrices, all five rebuilt shards, padding, and checksums.
+Browser verification covers insufficient shards, two missing data shards, partial-bundle save/import, actual missing-index controls, full shard repair, corrupt import rejection, and a separate uploaded binary file using 2-of-3 coding. Prior verification used an independent Python polynomial-field decoder to check matrices, rebuilt shards, padding, and checksums.
 
-Reference: Plank and Ding, [Note: Correction to the 1997 Tutorial on Reed–Solomon Coding](https://web.eecs.utk.edu/~jplank/plank/papers/CS-03-504.html), published in *Software: Practice and Experience* 35(2), 2005. The construction here transforms a full Vandermonde matrix; it does not simply append arbitrary Vandermonde parity rows to an identity matrix.
+Reference: Plank and Ding, [Note: Correction to the 1997 Tutorial on Reed–Solomon Coding](https://web.eecs.utk.edu/~jplank/plank/papers/CS-03-504.html), published in _Software: Practice and Experience_ 35(2), 2005. The construction here transforms a full Vandermonde matrix; it does not simply append arbitrary Vandermonde parity rows to an identity matrix.
